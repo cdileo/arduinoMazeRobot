@@ -1,7 +1,7 @@
 # arduinoMazeRobot
 For COGS 300 W2017
 
-Basic maze pathfinding logic for Cognitive Systems 300 lab at UBC.
+Basic maze pathfinding logic for Cognitive Systems 300 lab at UBC. [See it in action.](https://youtu.be/4mDvREA03Bs)
 
 ![Robot Picture](/ArduinoMazeRobot_isoView.jpg)
 
