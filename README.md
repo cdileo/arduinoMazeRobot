@@ -2,6 +2,9 @@
 For COGS 300 W2017
 
 Basic maze pathfinding logic for Cognitive Systems 300 lab at UBC.
+
+![Robot Picture](/ArduinoMazeRobot_isoView.jpg)
+
 Robot is built on an Arduino Uno with:
 - 2 x ultrasonic sensors
 - 1 x forward touch sensor
