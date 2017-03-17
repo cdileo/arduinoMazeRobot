@@ -42,7 +42,8 @@
 // We were playing with feeding different motor speeds.
 #define MOTOR_SPEED 255 // 0-255
 
-#define LIGHT_SENSOR_PIN A5
+#define LIGHT_SENSOR_PIN A5 // Light sensor pin
+#define LIGHT_THRESHOLD 1.0 // What we consider to be looking at black 
 
 NewPing sonarL(TRIGGER_PIN_L, ECHO_PIN_L, MAX_DISTANCE);
 NewPing sonarR(TRIGGER_PIN_R, ECHO_PIN_R, MAX_DISTANCE);
@@ -65,11 +66,39 @@ void loop(){
   // Our base state is to move forward until we hit something.
   goForward();
   delay(50); 
-  
-  //check for a bump
-  if (checkTouch() == 0) {
-    backUpAndLookForHole();
+  if (lightReading() > LIGHT_THRESHOLD) {
+    turnRight(255);
+    delay(100);
+    stopMotors();
+    search();
   }
+  
+}
+
+void search() {
+  // Do a max of 5 sweeps before resetting
+  int i;
+  for (i = 0; i < 5; i++) {
+    goForward();
+    delay(100);
+    sweep();  
+  }
+  reset();
+}
+
+void sweep() {
+  // need to incorporate light sensor readings here too
+  turnLeft(255);
+  delay(100);
+  turnRight(255);
+  delay(200);
+}
+
+void reset(){
+  goBackward();
+  delay(300);
+  turnLeft(255);
+  stopMotors();
 }
 
 int checkTouch() {
