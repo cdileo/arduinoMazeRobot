@@ -7,6 +7,7 @@
  * Steven Kim
 */
 #include <NewPing.h>
+#include <Servo.h>
 /*Define Motor Pins. R/L indicates left/right motor and F/R indicates whether 
                   the robot moves forward or reverse when powered on pin.*/
 //Control pins for forward and reverse motor movement
@@ -42,8 +43,13 @@
 // We were playing with feeding different motor speeds.
 #define MOTOR_SPEED 255 // 0-255
 
-#define LIGHT_SENSOR_PIN A5 // Light sensor pin
-#define LIGHT_THRESHOLD 1.0 // What we consider to be looking at black 
+#define LIGHT_SENSOR_PIN A1 // Light sensor pin
+#define LIGHT_THRESHOLD 1.2 // What we consider to be looking at black 
+
+// Using the servo
+#define SERVO_PIN 12
+Servo servo;
+int servoPosition = 80;
 
 NewPing sonarL(TRIGGER_PIN_L, ECHO_PIN_L, MAX_DISTANCE);
 NewPing sonarR(TRIGGER_PIN_R, ECHO_PIN_R, MAX_DISTANCE);
@@ -60,16 +66,26 @@ void setup() {
   pinMode(ECHO_PIN_L, INPUT);
   pinMode(TRIGGER_PIN_R, OUTPUT);
   pinMode(ECHO_PIN_R, INPUT);
+  delay(1000);
 }
 
 void loop(){
   // Our base state is to move forward until we hit something.
   goForward();
-  delay(50); 
-  if (lightReading() > LIGHT_THRESHOLD) {
+  int foundBlack = testForBlack();
+  while(!foundBlack) {
+    delay(200);
+    stopAndThink();
+    foundBlack = testForBlack();
+    goForward();
+  }
+  
+  stopAndThink();
+  if (lightReading() < LIGHT_THRESHOLD) {
+    stopAndThink();
     turnRight(255);
     delay(100);
-    stopMotors();
+    stopAndThink();
     search();
   }
   
@@ -81,6 +97,7 @@ void search() {
   for (i = 0; i < 5; i++) {
     goForward();
     delay(100);
+    stopAndThink();
     sweep();  
   }
   reset();
@@ -88,10 +105,35 @@ void search() {
 
 void sweep() {
   // need to incorporate light sensor readings here too
+  float lr = lightReading();
+  if (testForBlack()) turnAround();
   turnLeft(255);
-  delay(100);
+  delay(1000);
+  stopAndThink();
+  lr = lightReading();
+  if (testForBlack()) turnAround();
   turnRight(255);
-  delay(200);
+  delay(1000);
+  stopAndThink();
+  lr = lightReading();
+  if (testForBlack()) turnAround();
+}
+
+int testForBlack() {
+  float lr = lightReading();
+  Serial.println(lr);
+  if (lr < LIGHT_THRESHOLD){
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+void turnAround(){
+  // Every now and then I fall apart
+  turnRight(255);
+  delay(2000);
+  stopAndThink();
 }
 
 void reset(){
@@ -197,24 +239,37 @@ void goBackward() {
 void turnLeft(int speed) {
   stopMotors();
   analogWrite(motorRF, speed); 
-//  analogWrite(motorLR, MOTOR_SPEED); // Enable me for a tighter turn
+  analogWrite(motorLR, MOTOR_SPEED); // Enable me for a tighter turn
 }
 
 void turnRight(int speed) {
   stopMotors();
-//  analogWrite(motorRR, MOTOR_SPEED); // Enable me for a tighter turn
+  analogWrite(motorRR, MOTOR_SPEED); // Enable me for a tighter turn
   analogWrite(motorLF, speed); 
 }
 
-void closeClaw (int degrees) {
-  
+void closeClaw () {
+  for (servoPosition = 80; servoPosition <= 160; servoPosition += 1) { 
+    servo.write(servoPosition);      // tell servo to go to position in variable 'pos'
+    delay(15);                       // waits 15ms for the servo to reach the position
+  }
 }
 
-void openClaw (int degrees) {
-  
+void openClaw () {
+    for (servoPosition = 160; servoPosition <= 80; servoPosition -= 1) { 
+    servo.write(servoPosition);      // tell servo to go to position in variable 'pos'
+    delay(15);                       // waits 15ms for the servo to reach the position
+  }
 }
 
 float lightReading () {
-  return analogRead(LIGHT_SENSOR_PIN);
+  int i = 0;
+  int numSamples = 500; //Average out the sensor's readings to get something reliable.
+  int sumReadings = 0;
+  
+  for (i = 0; i < numSamples; i++){
+    sumReadings += analogRead(LIGHT_SENSOR_PIN);
+  }
+  return (sumReadings * 1.0) / (numSamples * 1.0);
 }
 
