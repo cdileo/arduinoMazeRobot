@@ -44,7 +44,7 @@
 #define MOTOR_SPEED 255 // 0-255
 
 #define LIGHT_SENSOR_PIN A1 // Light sensor pin
-#define LIGHT_THRESHOLD 1.2 // What we consider to be looking at black 
+#define LIGHT_THRESHOLD 2.5 // What we consider to be looking at black 
 
 // Using the servo
 #define SERVO_PIN 12
@@ -91,6 +91,11 @@ void loop(){
   
 }
 
+void closeAndOpenClaw() {
+  closeClaw();
+  openClaw();
+}
+
 void search() {
   // Do a max of 5 sweeps before resetting
   int i;
@@ -106,22 +111,21 @@ void search() {
 void sweep() {
   // need to incorporate light sensor readings here too
   float lr = lightReading();
-  if (testForBlack()) turnAround();
+  if (testForBlack()) closeAndOpenClaw();
   turnLeft(255);
   delay(1000);
   stopAndThink();
   lr = lightReading();
-  if (testForBlack()) turnAround();
+  if (testForBlack()) closeAndOpenClaw();
   turnRight(255);
   delay(1000);
   stopAndThink();
   lr = lightReading();
-  if (testForBlack()) turnAround();
+  if (testForBlack()) closeAndOpenClaw();
 }
 
 int testForBlack() {
   float lr = lightReading();
-  Serial.println(lr);
   if (lr < LIGHT_THRESHOLD){
     return 1;
   } else {
@@ -264,12 +268,27 @@ void openClaw () {
 
 float lightReading () {
   int i = 0;
-  int numSamples = 500; //Average out the sensor's readings to get something reliable.
+  int numSamples = 1000; //Average out the sensor's readings to get something reliable.
   int sumReadings = 0;
+  int thisReading;
+  float avg;
   
   for (i = 0; i < numSamples; i++){
-    sumReadings += analogRead(LIGHT_SENSOR_PIN);
+    thisReading = analogRead(LIGHT_SENSOR_PIN);
+    plotSensorRead(thisReading);
+    sumReadings += thisReading;
   }
-  return (sumReadings * 1.0) / (numSamples * 1.0);
+  avg = (sumReadings * 1.0) / (numSamples * 1.0);
+  Serial.println(avg);
+  return avg;
+}
+
+void plotSensorRead(int reading) {
+//  Serial.println(0);
+//  Serial.println(" ");
+//  Serial.println(255);
+//  Serial.println(" ");
+//  delay(15);
+//  Serial.println(reading);
 }
 
